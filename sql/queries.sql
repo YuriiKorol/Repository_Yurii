@@ -25,7 +25,7 @@ SELECT shop.title
       ,shop.category_id
 FROM shop
 WHERE shop.price = (SELECT MIN(s2.price) FROM shop s2
-					          WHERE s2.category_id = shop.category_id);
+				    WHERE s2.category_id = shop.category_id);
  
 -- Task: Show the product name, its price, and the average price of its category, 
 -- but only for products that are more expensive than the average price of their category.
