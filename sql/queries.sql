@@ -12,7 +12,7 @@ GROUP BY shop.id)
 ,ranked AS (
 SELECT title
 	  ,cnt_orders
-    ,DENSE_RANK() OVER (ORDER BY cnt_orders DESC) AS rank_ord
+      ,DENSE_RANK() OVER (ORDER BY cnt_orders DESC) AS rank_ord
 FROM cte)
 SELECT * 
 FROM ranked 
@@ -27,5 +27,42 @@ FROM shop
 WHERE shop.price = (SELECT MIN(s2.price) FROM shop s2
 					          WHERE s2.category_id = shop.category_id);
  
+-- Task: Show the product name, its price, and the average price of its category, 
+-- but only for products that are more expensive than the average price of their category.
+SELECT 
+     shop.title
+    ,shop.price
+    ,(
+        SELECT AVG(shop_inner.price)
+        FROM shop AS shop_inner
+        WHERE shop_inner.category_id = shop.category_id    
+     ) AS avg_cat_price
+FROM shop
+WHERE shop.price > (
+        SELECT AVG(shop_inner.price)
+        FROM shop AS shop_inner
+        WHERE shop_inner.category_id = shop.category_id 
+                   );
 
+-- Task: Distribution of orders by price and season for the year 2025
+SELECT 
+      CASE 
+            WHEN price < 1500
+            THEN 'small'
+            WHEN price <= 2200
+      		THEN 'medium'
+      		ELSE 'large'
+      		END            AS order_size
+      ,CASE
+	      	WHEN MONTH(orders.date_time) IN (12, 1, 2) THEN 'winter'
+	        WHEN MONTH(orders.date_time) IN (3, 4, 5) THEN 'spring'
+	        WHEN MONTH(orders.date_time) IN (6, 7, 8) THEN 'summer'
+	        ELSE 'autumn'
+	      	END            AS season
+      , count(*) AS cnt
+FROM orders
+JOIN shop ON shop.id = orders.shopId
+WHERE YEAR(orders.date_time) = 2025
+GROUP BY order_size, season
+ORDER BY order_size, season;
 
