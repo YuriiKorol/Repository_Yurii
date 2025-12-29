@@ -1,7 +1,7 @@
 --Topic: Online Store Sales Analysis
 
--- Task: Top 3 products sold in 2025
--- The task could have been simplified using LIMIT, but it may cut off rows with identical values
+/* Task: Top 3 products sold in 2025
+         The task could have been simplified using LIMIT, but it may cut off rows with identical values*/
 WITH cte AS (
 SELECT shop.title
       ,count(*) AS cnt_orders 
@@ -17,21 +17,13 @@ FROM cte)
 SELECT * 
 FROM ranked 
 WHERE rank_ord <= 3;
-
--- Task: Find products with the minimum price in their category using a correlated subquery
--- The inner subquery is executed for each row of the outer query, which allows values to be compared row by row.
-SELECT shop.title
-      ,shop.price
-      ,shop.category_id
-FROM shop
-WHERE shop.price = (SELECT MIN(s2.price) FROM shop s2
-				    WHERE s2.category_id = shop.category_id);
  
--- Task: Show the product name, its price, and the average price of its category, 
--- but only for products that are more expensive than the average price of their category.
+/* Task: Show the product name, its price, and the average price of its category, but only for products that are more expensive than the average price of their category.
+   Approach 1: Correlated subquery.
+               The inner subquery is executed for each row of the outer query*/
 SELECT 
      shop.title
-    ,shop.price
+    ,shop.price 
     ,(
         SELECT AVG(shop_inner.price)
         FROM shop AS shop_inner
@@ -43,6 +35,31 @@ WHERE shop.price > (
         FROM shop AS shop_inner
         WHERE shop_inner.category_id = shop.category_id 
                    );
+
+-- Approach 2: JOIN with aggregated table
+-- More efficient for larger datasets
+SELECT 
+     shop.title
+    ,shop.price
+    ,avg_tb.avg_cat_price
+FROM shop
+JOIN (
+        SELECT AVG(shop_inner.price) AS avg_cat_price
+        	  ,category_id
+        FROM shop AS shop_inner
+        GROUP BY category_id   
+     ) AS avg_tb
+ON shop.category_id = avg_tb.category_id
+WHERE shop.price > avg_tb.avg_cat_price
+	
+/* Task: Find products with the minimum price in their category using a correlated subquery
+         The inner subquery is executed for each row of the outer query, which allows values to be compared row by row.*/
+SELECT shop.title
+      ,shop.price
+      ,shop.category_id
+FROM shop
+WHERE shop.price = (SELECT MIN(s2.price) FROM shop s2
+				    WHERE s2.category_id = shop.category_id);
 
 -- Task: Distribution of orders by price and season for the year 2025
 SELECT 
